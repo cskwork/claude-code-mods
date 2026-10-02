@@ -1,3 +1,7 @@
 # Written by Claude Code at every load; regenerated, never edited.
 */.claude-plugin/types/
 .DS_Store
+# impeccable working files (the surface brief in .impeccable/surfaces is kept)
+.impeccable/*
+!.impeccable/surfaces/
+!.impeccable/design.json

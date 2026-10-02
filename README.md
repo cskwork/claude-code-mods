@@ -4,6 +4,8 @@ Mods for Claude Code (2.1.287+): plugins of function hooks that observe, rewrite
 what Claude Code does and draw their own UI. Based on
 [Getting started with Claude Code mods](https://claude.dev/blog/getting-started-with-claude-code-mods/).
 
+Landing page: https://cskwork.github.io/claude-code-mods/
+
 | Mod | What it does |
 | --- | --- |
 | [`token-weather`](token-weather) | A one-line forecast of the context window above the prompt: ☀ Clear → ↯ Compact soon, tokens used, a sparkline of the last 12 turns, and how much the last turn added. |
