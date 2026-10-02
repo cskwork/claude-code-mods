@@ -70,7 +70,7 @@ p { margin: 0 0 1em; max-width: 68ch; }
 .brand { display: flex; align-items: center; gap: 10px; font: 800 22px/1 var(--display); text-transform: uppercase; text-decoration: none; letter-spacing: .02em; }
 .brand svg { width: 26px; height: 26px; }
 .rail nav { display: flex; gap: calc(var(--m) * 2.5); margin-left: auto; font: 600 16px/1 var(--display); text-transform: uppercase; letter-spacing: .06em; }
-.rail nav a { text-decoration: none; padding: 6px 0; border-bottom: 2px solid transparent; }
+.rail nav a { white-space: nowrap; text-decoration: none; padding: 6px 0; border-bottom: 2px solid transparent; }
 .rail nav a:hover { border-color: var(--caution); }
 .lang { display: flex; border: 2px solid var(--panel); }
 .lang button { all: unset; cursor: pointer; padding: 5px 10px; font: 600 14px/1 var(--display); letter-spacing: .06em; }
@@ -192,6 +192,26 @@ ul.ticks li { position: relative; padding: 10px 0 10px 34px; border-bottom: 1px 
 ul.ticks li:last-child { border-bottom: 0; }
 ul.ticks li svg { position: absolute; left: 0; top: 13px; width: 20px; height: 20px; }
 
+.register-wrap { overflow-x: auto; }
+.register { min-width: 880px; }
+.register th[scope=row] { font: 600 16px/1.3 var(--body); white-space: nowrap; text-transform: none; letter-spacing: 0; }
+@media (max-width: 720px) {
+  .register { min-width: 0; }
+  .register thead { display: none; }
+  .register, .register tbody, .register tr, .register th, .register td { display: block; }
+  .register tr { padding: 14px 0; border-bottom: 1px solid var(--ink); }
+  .register tr:last-child { border-bottom: 0; }
+  .register th[scope=row], .register td { border: 0; padding: 4px 0; }
+  .register .num { text-align: left; }
+  .register .num::before { content: "★ "; }
+  .register .cmd { min-width: 0; }
+}
+.register th[scope=row] a { text-decoration-color: var(--caution); }
+.register .repo { display: block; font: 400 12px/1.4 var(--mono); color: var(--muted); }
+.register td { vertical-align: top; }
+.register .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.register .warn { display: block; margin-top: 4px; font-size: 14px; color: var(--danger); font-weight: 600; }
+.register .cmd { font-size: 12.5px; min-width: 330px; }
 ol.method { list-style: none; counter-reset: step; padding: 0; margin: 0; }
 ol.method > li { counter-increment: step; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px 32px; align-items: start; padding: 22px 20px; border-top: 1px solid var(--ink); }
 ol.method > li:first-child { border-top: 0; }
@@ -259,6 +279,7 @@ ol.method p { margin: 10px 0 0 52px; }
     <nav aria-label="Sections">
       <a href="#token-weather">token-weather</a>
       <a href="#blast-radius">blast-radius</a>
+      <a href="#community" data-i18n="nav.community">Community</a>
       <a href="#make" data-i18n="nav.make">Make your own</a>
       <a href="https://github.com/cskwork/claude-code-mods">GitHub</a>
     </nav>
@@ -419,6 +440,86 @@ ol.method p { margin: 10px 0 0 52px; }
     </div>
   </section>
 
+  <section class="sheet" id="community" aria-labelledby="cm-h">
+    <div class="wrap">
+      <div class="sheet-head">
+        <h2 id="cm-h" data-i18n="cm.title">Contractors on site: community mods</h2>
+        <p data-i18n="cm.lede">The most-starred mods the community has built, checked to be real function-hook mods. Third-party code runs on your machine: read the repo before you install.</p>
+      </div>
+      <div class="placard">
+        <h3 class="signal caution"><svg aria-hidden="true"><use href="#i-caution"/></svg><span data-i18n="cm.register">Contractor register · GitHub stars, 2 Oct 2026</span></h3>
+        <div class="placard-body register-wrap">
+          <table class="legend register">
+            <thead><tr><th scope="col" data-i18n="cm.c-mod">Mod</th><th scope="col" data-i18n="cm.c-what">What it does</th><th scope="col" class="num" data-i18n="cm.c-stars">Stars</th><th scope="col" data-i18n="cm.c-install">Install</th></tr></thead>
+            <tbody>
+          <tr>
+            <th scope="row"><a href="https://github.com/tamaratran/fast-jev-compaction">fast-jev-compaction</a><span class="repo">tamaratran/fast-jev-compaction</span></th>
+            <td><span data-i18n="cm.c1">Replaces the compaction summary: a small model drops stale tool calls, the rest stays word for word.</span><span class="warn" data-i18n="cm.c1w">Needs a TypeSafe key; sends the conversation to api.typesafe.ai.</span></td>
+            <td class="num">7,314</td>
+            <td><div class="cmd"><span>/plugin marketplace add tamaratran/fast-jev-compaction<br>/plugin install fast-jev-compaction@<wbr>fast-jev-compaction</span><button class="copy" type="button" aria-label="Copy"><svg><use href="#i-copy"/></svg></button></div></td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="https://github.com/kunchenguid/compact-adviser">compact-adviser</a><span class="repo">kunchenguid/compact-adviser</span></th>
+            <td><span data-i18n="cm.c2">Tells you when finished work makes /compact worthwhile.</span></td>
+            <td class="num">192</td>
+            <td><div class="cmd"><span>/plugin marketplace add kunchenguid/compact-adviser<br>/plugin install compact-adviser@<wbr>compact-adviser</span><button class="copy" type="button" aria-label="Copy"><svg><use href="#i-copy"/></svg></button></div></td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="https://github.com/greenpolo/cc-multi-cli-plugin">multi-core</a><span class="repo">greenpolo/cc-multi-cli-plugin</span></th>
+            <td><span data-i18n="cm.c3">Use Codex, Cursor, OpenCode Zen and Antigravity models inside Claude Code.</span></td>
+            <td class="num">184</td>
+            <td><div class="cmd"><span>/plugin marketplace add greenpolo/cc-multi-cli-plugin<br>/plugin install multi-core@<wbr>cc-multi-cli-plugin</span><button class="copy" type="button" aria-label="Copy"><svg><use href="#i-copy"/></svg></button></div></td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="https://github.com/pleaseai/shunt">shunt</a><span class="repo">pleaseai/shunt</span></th>
+            <td><span data-i18n="cm.c4">/shunt:usage shows the headroom left on a shared account pool behind a gateway.</span><span class="warn" data-i18n="cm.c4w">Reported failing validation on 2.1.274.</span></td>
+            <td class="num">167</td>
+            <td><div class="cmd"><span>/plugin marketplace add pleaseai/shunt<br>/plugin install shunt@<wbr>shunt</span><button class="copy" type="button" aria-label="Copy"><svg><use href="#i-copy"/></svg></button></div></td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="https://github.com/tamaratran/jev-pruner">jev-pruner</a><span class="repo">tamaratran/jev-pruner</span></th>
+            <td><span data-i18n="cm.c5">Trims long Bash output with a small model before Claude reads it.</span><span class="warn" data-i18n="cm.c5w">Needs a TypeSafe key.</span></td>
+            <td class="num">156</td>
+            <td><div class="cmd"><span>/plugin marketplace add tamaratran/jev-pruner<br>/plugin install fast-jev-output@<wbr>fast-jev-output</span><button class="copy" type="button" aria-label="Copy"><svg><use href="#i-copy"/></svg></button></div></td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="https://github.com/GhalebDweikat/winnow">winnow</a><span class="repo">GhalebDweikat/winnow</span></th>
+            <td><span data-i18n="cm.c6">A small model judges every tool result before it enters context.</span><span class="warn" data-i18n="cm.c6w">Runs a Python helper process.</span></td>
+            <td class="num">100</td>
+            <td><div class="cmd"><span>/plugin marketplace add GhalebDweikat/winnow<br>/plugin install winnow@<wbr>winnow</span><button class="copy" type="button" aria-label="Copy"><svg><use href="#i-copy"/></svg></button></div></td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="https://github.com/halluton/Mindful-Claude">Mindful-Claude</a><span class="repo">halluton/Mindful-Claude</span></th>
+            <td><span data-i18n="cm.c7">Guided breathing above the prompt while Claude works; /breathe picks the exercise.</span></td>
+            <td class="num">82</td>
+            <td><div class="cmd"><span>/plugin marketplace add halluton/Mindful-Claude<br>/plugin install mindful-claude@<wbr>mindful-claude</span><button class="copy" type="button" aria-label="Copy"><svg><use href="#i-copy"/></svg></button></div></td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="https://github.com/EliaAlberti/jev-rules">jev-rules</a><span class="repo">EliaAlberti/jev-rules</span></th>
+            <td><span data-i18n="cm.c8">Picks which of your rules apply to each prompt and shows them in a pane.</span></td>
+            <td class="num">62</td>
+            <td><div class="cmd"><span>/plugin marketplace add EliaAlberti/jev-rules<br>/plugin install jev-rules@<wbr>jev-rules</span><button class="copy" type="button" aria-label="Copy"><svg><use href="#i-copy"/></svg></button></div></td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="https://github.com/darrell-tw/darrelltw-mods">tw-stock-mod</a><span class="repo">darrell-tw/darrelltw-mods</span></th>
+            <td><span data-i18n="cm.c9">Taiwan and US stock ticker above the prompt.</span></td>
+            <td class="num">57</td>
+            <td><div class="cmd"><span>/plugin marketplace add darrell-tw/darrelltw-mods<br>/plugin install tw-stock-mod@<wbr>darrelltw-mods</span><button class="copy" type="button" aria-label="Copy"><svg><use href="#i-copy"/></svg></button></div></td>
+          </tr>
+          <tr>
+            <th scope="row"><a href="https://github.com/sezaakgun/cc-arcade">cc-arcade</a><span class="repo">sezaakgun/cc-arcade</span></th>
+            <td><span data-i18n="cm.c10">Tetris and other games above the prompt while you wait.</span></td>
+            <td class="num">36</td>
+            <td><div class="cmd"><span>/plugin marketplace add sezaakgun/cc-arcade<br>/plugin install cc-arcade@<wbr>cc-arcade</span><button class="copy" type="button" aria-label="Copy"><svg><use href="#i-copy"/></svg></button></div></td>
+          </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="req" data-i18n-html="cm.more">Not in Anthropic's review: these are listed, not endorsed. More in <a href="https://github.com/karanb192/awesome-claude-code-mods">awesome-claude-code-mods</a>. cache-tax (39 stars) has no marketplace file yet.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="sheet" id="make" aria-labelledby="make-h">
     <div class="wrap">
       <div class="sheet-head">
@@ -488,6 +589,29 @@ git push</pre>
   const I18N = {
     ko: {
       "nav.make": "직접 만들기",
+      "cm.c1": "압축 요약을 대체: 작은 모델이 낡은 도구 호출을 지우고 나머지는 원문 그대로 둡니다.",
+      "cm.c1w": "TypeSafe 키 필요, 대화를 api.typesafe.ai로 전송합니다.",
+      "cm.c2": "끝난 작업이 쌓여 /compact 하기 좋은 때를 알려 줍니다.",
+      "cm.c3": "Claude Code 안에서 Codex, Cursor, OpenCode Zen, Antigravity 모델을 씁니다.",
+      "cm.c4": "/shunt:usage로 게이트웨이 뒤 공유 계정 풀의 남은 사용량을 봅니다.",
+      "cm.c4w": "2.1.274에서 검증 실패 보고가 있습니다.",
+      "cm.c5": "긴 Bash 출력을 Claude가 읽기 전에 작은 모델로 줄입니다.",
+      "cm.c5w": "TypeSafe 키 필요.",
+      "cm.c6": "도구 결과가 컨텍스트에 들어가기 전에 작은 모델이 걸러냅니다.",
+      "cm.c6w": "Python 보조 프로세스를 함께 실행합니다.",
+      "cm.c7": "Claude가 일하는 동안 입력창 위에 호흡 안내, /breathe로 호흡법 선택.",
+      "cm.c8": "프롬프트마다 적용할 내 규칙을 골라 패널에 보여 줍니다.",
+      "cm.c9": "입력창 위 대만·미국 주식 시세.",
+      "cm.c10": "기다리는 동안 입력창 위에서 테트리스 등 게임.",
+      "nav.community": "커뮤니티",
+      "cm.title": "현장 협력업체: 커뮤니티 모드",
+      "cm.lede": "커뮤니티가 만든 모드 중 별이 가장 많은 것들이며, 실제 함수 훅 모드인지 확인했습니다. 남이 만든 코드가 내 컴퓨터에서 돌아가니 설치 전에 저장소를 읽어 보세요.",
+      "cm.register": "협력업체 명부 · GitHub 별, 2026-10-02 기준",
+      "cm.c-mod": "모드",
+      "cm.c-what": "하는 일",
+      "cm.c-stars": "별",
+      "cm.c-install": "설치",
+      "cm.more": "Anthropic 검수를 거친 목록이 아니며 소개만 합니다. 더 많은 모드는 <a href=\"https://github.com/karanb192/awesome-claude-code-mods\">awesome-claude-code-mods</a>에 있습니다. cache-tax(별 39)는 아직 마켓플레이스 파일이 없습니다.",
       "hero.title": "Claude Code 현장 안전 수칙",
       "hero.lede": "Claude Code 터미널 안에서 돌아가는 모드 두 개와, 그 모드를 만든 템플릿입니다. 하나는 오늘의 컨텍스트 창 상황을 게시하고, 다른 하나는 위험한 명령이 실행 전에 dry run 결과를 보여 주고 승인을 기다리게 합니다.",
       "hero.install": "설치",
@@ -688,9 +812,9 @@ git push</pre>
     use?.setAttribute("href", "#i-check");
     setTimeout(() => { button.classList.remove("done"); use?.setAttribute("href", "#i-copy"); }, 1600);
   }
-  document.querySelectorAll(".cmd .copy").forEach(b => b.addEventListener("click", () => copy(b.previousElementSibling.textContent, b)));
+  document.querySelectorAll(".cmd .copy").forEach(b => b.addEventListener("click", () => copy(b.previousElementSibling.innerText, b)));
   document.querySelectorAll(".copy-all").forEach(b => b.addEventListener("click", () => {
-    const lines = [...b.parentElement.querySelectorAll(".cmd span")].map(s => s.textContent);
+    const lines = [...b.parentElement.querySelectorAll(".cmd > span")].map(s => s.textContent);
     copy([...lines, "/reload-plugins"].join("\n"), b);
   }));
 
