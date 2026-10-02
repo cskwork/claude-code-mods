@@ -1,0 +1,6 @@
+{
+  "name": "blast-radius",
+  "version": "0.1.0",
+  "description": "Dry-runs risky Bash commands (recursive deletes, destructive git, kubectl delete, SQL wipes) and asks Proceed or Cancel first.",
+  "author": { "name": "cskwork" }
+}

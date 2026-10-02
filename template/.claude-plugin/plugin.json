@@ -1,0 +1,7 @@
+{
+  "name": "mod-template",
+  "version": "0.1.0",
+  "description": "Starter mod: a /mod-template command, a status line entry and a band above the prompt.",
+  "author": { "name": "cskwork" },
+  "types": "./types/index.d.ts"
+}
