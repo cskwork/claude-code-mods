@@ -1,0 +1,35 @@
+{
+  "name": "usage-reporter",
+  "version": "0.1.0",
+  "description": "Shows the weekly limit reading and, once configured, POSTs it hourly to your HTTPS endpoint. Off by default.",
+  "author": { "name": "cskwork" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Send reports",
+      "description": "POST a new, fresh weekly usage reading each hour. Leave off until postUrl, accountId and postToken are set.",
+      "default": false
+    },
+    "postUrl": {
+      "type": "string",
+      "sensitive": true,
+      "title": "Receiver URL",
+      "description": "HTTPS endpoint that receives the JSON report. No user:password in the URL.",
+      "default": ""
+    },
+    "accountId": {
+      "type": "string",
+      "title": "Account ID",
+      "description": "The site account UUID, used locally to identify the configured receiver account. It must match the account in postUrl.",
+      "default": ""
+    },
+    "postToken": {
+      "type": "string",
+      "title": "Receiver token",
+      "description": "Required account-specific bearer token for the receiver (Authorization header). Never a Claude credential.",
+      "sensitive": true,
+      "default": ""
+    }
+  }
+}
