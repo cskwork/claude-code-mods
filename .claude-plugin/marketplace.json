@@ -3,7 +3,7 @@
   "owner": {
     "name": "cskwork"
   },
-  "description": "Claude Code mods (function-hook plugins): token-weather, blast-radius, and a template for making your own.",
+  "description": "Claude Code mods: context forecast, risky command preview, hourly subscription usage reporting, and a starter template.",
   "plugins": [
     {
       "name": "token-weather",
@@ -14,6 +14,11 @@
       "name": "blast-radius",
       "source": "./blast-radius",
       "description": "Dry-runs risky Bash commands and asks Proceed or Cancel first."
+    },
+    {
+      "name": "usage-reporter",
+      "source": "./usage-reporter",
+      "description": "Shows the weekly limit reading and, once configured, POSTs it hourly to your HTTPS endpoint. Off by default."
     }
   ]
 }
