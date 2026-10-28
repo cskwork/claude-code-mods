@@ -22,7 +22,7 @@ describe('analyze', () => {
     expect(analyze('git branch -D old')[0]?.checks[0]?.argv).toEqual(['git', 'log', '--oneline', 'old', '--not', '--remotes'])
     expect(analyze('git restore --staged a.ts')).toEqual([])
     expect(analyze('git -C repo worktree remove ../old')[0]?.checks[0]).toEqual({ label: 'worktrees', argv: ['git', 'worktree', 'list', '--porcelain'], cwd: 'repo' })
-    expect(analyze('git checkout origin/aidt-dev -- src/a.ts')[0]?.reason).toContain('overwrites')
+    expect(analyze('git checkout origin/dev -- src/a.ts')[0]?.reason).toContain('overwrites')
   })
 
   test('SQL wipes and migrations are flagged without a dry run', async () => {
@@ -78,9 +78,9 @@ describe('blast-radius hook', () => {
   })
 })
 
-const ROOT = '/Users/agent/AIDT'
-const REPO = `${ROOT}/aidt-viewer-api`
-const WORKTREE = `${ROOT}/worktrees/A20-1404-viewer-api-stg`
+const ROOT = '/Users/agent/project'
+const REPO = `${ROOT}/service-api`
+const WORKTREE = `${ROOT}/worktrees/TICKET-1-viewer-api-stg`
 
 function unattended(on: On, options: {
   allow?: string; cwd?: string; file?: string; answer?: string; readError?: string
@@ -130,14 +130,14 @@ describe('unattended allowlist', () => {
 
   test('expands earlier assignments for checkout of specific files', async ($, on) => {
     unattended(on)
-    const ran = await $.tool.call({ tool: 'Bash', command: `W=${WORKTREE}; git -C $W checkout origin/aidt-dev -- src/a.ts src/b.ts` })
+    const ran = await $.tool.call({ tool: 'Bash', command: `W=${WORKTREE}; git -C $W checkout origin/dev -- src/a.ts src/b.ts` })
     expect(ran.deny).toBeUndefined()
     expect(ran.result?.stdout).toContain('auto-proceed')
   })
 
   test('expands tilde, braces, quotes and sequential cd', async ($, on) => {
     unattended(on)
-    const ran = await $.tool.call({ tool: 'Bash', command: 'W=~/AIDT; cd "$W" && cd worktrees && rm -rf "${W}/old tree"' })
+    const ran = await $.tool.call({ tool: 'Bash', command: 'W=~/project; cd "$W" && cd worktrees && rm -rf "${W}/old tree"' })
     expect(ran.deny).toBeUndefined()
     expect(ran.result?.stdout).toContain('auto-proceed')
   })
@@ -152,7 +152,7 @@ describe('unattended allowlist', () => {
     ['a sibling prefix does not match', `rm -rf ${ROOT}-other/old`],
     ['an unresolved variable is denied', `git -C $UNKNOWN reset --hard`],
     ['later assignments cannot resolve earlier risks', `git -C $W reset --hard; W=${ROOT}`],
-    ['HOME assignments cannot redirect tilde expansion', 'HOME=/outside; rm -rf ~/AIDT/old'],
+    ['HOME assignments cannot redirect tilde expansion', 'HOME=/outside; rm -rf ~/project/old'],
     ['git environment overrides cannot redirect writes', `GIT_WORK_TREE=/outside; git -C ${REPO} reset --hard`],
     ['a single-quoted variable stays literal', `rm -rf '$UNKNOWN/old'`],
     ['command substitution is never evaluated', `rm -rf $(echo ${ROOT})/old`],
