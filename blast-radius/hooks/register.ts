@@ -4,6 +4,7 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import { analyze } from './analyze'
 import type { Check, Risk } from './analyze'
+import { safeReason } from './safe'
 import { unattendedReason } from './unattended'
 
 const PROCEED = 'Proceed'
@@ -14,6 +15,12 @@ export const register: Register = on => {
   on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
     const risks = analyze(e.command)
     if (risks.length === 0) return next(e)
+
+    const safe = await safeReason($, e.command, risks)
+    if (safe) {
+      $.ui.log(safe)
+      return explain(await next(e), safe)
+    }
 
     const report = (await Promise.all(risks.map(risk => describe($, risk)))).join('\n\n')
     const question = `Blast radius of: ${e.command.slice(0, 120)}\n\n${report}\n\nRun it?`
@@ -36,10 +43,15 @@ export const register: Register = on => {
     }
     if (reason) $.ui.log(reason)
     const ran = await next(e)
-    if (reason && ran.deny === undefined && ran.result && typeof ran.result === 'object' && 'stdout' in ran.result && typeof ran.result.stdout === 'string')
-      return { ...ran, result: { ...ran.result, stdout: `${ran.result.stdout}\n${reason}` } }
-    return ran
+    return reason ? explain(ran, reason) : ran
   })
+}
+
+// Adds why the command ran unasked to its Bash result, so it shows in the transcript.
+function explain<T extends { deny?: unknown; result?: unknown }>(ran: T, reason: string): T {
+  if (ran.deny === undefined && ran.result && typeof ran.result === 'object' && 'stdout' in ran.result && typeof ran.result.stdout === 'string')
+    return { ...ran, result: { ...ran.result, stdout: `${ran.result.stdout}\n${reason}` } }
+  return ran
 }
 
 async function describe($: EngineInterface, risk: Risk) {

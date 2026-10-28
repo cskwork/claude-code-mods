@@ -9,7 +9,7 @@ Landing page: https://cskwork.github.io/claude-code-mods/
 | Mod | What it does |
 | --- | --- |
 | [`token-weather`](token-weather) | A one-line forecast of the context window above the prompt: ☀ Clear → ↯ Compact soon, tokens used, a sparkline of the last 12 turns, and how much the last turn added. |
-| [`blast-radius`](blast-radius) | Before a risky Bash command runs (recursive `rm`, destructive git including `worktree remove` and file checkout/restore, `kubectl delete`, SQL wipes, migrations), dry-runs what it would touch and asks **Proceed** or **Cancel**. Cancel denies; an unavailable dialog requires the explicit [unattended allowlist](#blast-radius-unattended-sessions). |
+| [`blast-radius`](blast-radius) | Before a risky Bash command runs (recursive `rm`, destructive git including `worktree remove` and file checkout/restore, `kubectl delete`, SQL wipes, migrations), dry-runs what it would touch and asks **Proceed** or **Cancel**. Deletes that stay inside system temp or a `.scratch`/`tmp`/`.tmp` folder [run without asking](#blast-radius-safe-targets). Cancel denies; an unavailable dialog requires the explicit [unattended allowlist](#blast-radius-unattended-sessions). |
 | [`usage-reporter`](usage-reporter) | Shows the weekly (`seven_day`) limit percentage and reset time in `/usage-reporter`. With your receiver URL, account ID and token configured, sends fresh readings on hourly ticks while Claude Code runs. Off by default. |
 | [`template`](template) | Starter mod, not installed: a slash command, a status line entry, a band, and a `$.state` contract with a test. |
 
@@ -24,6 +24,24 @@ Inside Claude Code:
 /plugin install usage-reporter@claude-code-mods
 /reload-plugins
 ```
+
+### blast-radius safe targets
+
+Since **0.3.0**, a command runs without the question when every risk it carries
+is a recursive `rm` and every target resolves inside one of:
+
+- system temp: `/tmp`, `/var/tmp`, `/usr/tmp`, or `$TMPDIR` when it sits under
+  system temp (macOS `/var/folders/...`). The temp folder itself and `/tmp/*` still ask.
+- a folder named `.scratch`, `tmp` or `.tmp` anywhere in the path, such as
+  `scripts/.scratch` or `~/.cache/tmp`. A relative target must name that folder
+  itself; `cd /tmp; rm -rf build` still asks.
+
+Targets are resolved with `realpath`, so a temp symlink into a project still asks.
+The command text is read, never run: unknown variables, command or process
+substitution, assignments that may not run, a changed `PATH`, an `rm` behind
+`sudo`/`xargs` or inside a subshell, patterns before the last path part, and any
+other risk in the same command (git, SQL, kubectl) keep the question. The Bash
+result and the log say why the command ran unasked.
 
 ### blast-radius unattended sessions
 

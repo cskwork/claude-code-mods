@@ -13,7 +13,7 @@
     {
       "name": "blast-radius",
       "source": "./blast-radius",
-      "description": "Dry-runs risky Bash commands and asks Proceed or Cancel; unattended sessions can use an explicit directory allowlist."
+      "description": "Dry-runs risky Bash commands and asks Proceed or Cancel; temp and scratch-folder deletes run unasked, and unattended sessions can use an explicit directory allowlist."
     },
     {
       "name": "usage-reporter",

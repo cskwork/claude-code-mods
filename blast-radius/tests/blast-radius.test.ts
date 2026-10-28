@@ -29,6 +29,15 @@ describe('analyze', () => {
     expect(analyze('mysql -e "DROP TABLE users"')[0]?.checks).toEqual([])
     expect(analyze('npx prisma migrate deploy')).toHaveLength(1)
   })
+
+  test('each line and each & starts a new command', async () => {
+    expect(analyze('rm -rf /tmp/build\ngit reset --hard').map(r => r.reason)).toEqual(['Recursive delete of /tmp/build', 'git reset --hard discards every uncommitted change'])
+    expect(analyze('rm -rf /tmp/build & git clean -fd')).toHaveLength(2)
+    expect(analyze("cat <<'EOF'\nnotes\nEOF\nrm -rf /etc/old")[0]?.reason).toBe('Recursive delete of /etc/old')
+    expect(analyze('rm -rf \\\n  build')[0]?.reason).toBe('Recursive delete of build')
+    expect(analyze('rm -rf build 2>&1')).toHaveLength(1)
+    expect(analyze('rm -rf build &>/dev/null')).toHaveLength(1)
+  })
 })
 
 describe('blast-radius hook', () => {
@@ -253,4 +262,126 @@ describe('unattended allowlist', () => {
     const ran = await $.tool.call({ tool: 'Bash', command: `rm -rf ${ROOT}/old` })
     expect(ran.deny).toContain('ENOENT')
   })
+})
+
+const LINKS: Record<string, string> = { '/tmp': '/private/tmp', '/var/tmp': '/private/var/tmp', '/var/folders': '/private/var/folders' }
+
+function safeTargets(on: On, options: {
+  env?: Record<string, string>; links?: Record<string, string>; missing?: string[]; logs?: string[]
+} = {}) {
+  const state = { asked: false, didRun: false }
+  const links = Object.entries({ ...LINKS, ...options.links }).sort(([a], [b]) => b.length - a.length)
+  mock.env(on, { HOME: '/Users/agent', ...options.env })
+  on('session.cwd', () => ({ value: ROOT }))
+  on('ui.status', () => ({ value: undefined }))
+  on('ui.log', ($, e) => { options.logs?.push(e.text); return { value: undefined } })
+  on('fs.read', () => ({ deny: 'safe targets must not need the unattended allowlist' }))
+  on('process.run', ($, e) => {
+    const path = e.argv[e.argv.length - 1]!
+    const link = links.find(([from]) => path === from || path.startsWith(`${from}/`))
+    const resolved = link ? link[1] + path.slice(link[0].length) : path
+    const missing = e.argv[0] === 'realpath' && options.missing?.includes(path)
+    return { value: {
+      exitCode: missing ? 1 : 0, stdout: e.argv[0] === 'realpath' && !missing ? `${resolved}\n` : '', stderr: '',
+      isStdoutTruncated: false, isStderrTruncated: false,
+    } }
+  })
+  on('tool.call', { tool: 'AskUserQuestion' }, ($, e) => {
+    state.asked = true
+    return { result: { questions: e.questions, answers: { [e.questions[0]?.question ?? '']: 'Cancel' } } }
+  })
+  on('tool.call', { tool: 'Bash' }, () => {
+    state.didRun = true
+    return { result: { stdout: 'command ran', stderr: '', interrupted: false } }
+  })
+  return state
+}
+
+// Shapes of two worker commands that waited on the question for 15 and 24 minutes.
+const SCRATCH_RUN = [
+  `cd ${ROOT}/.worktrees/s2-player; E=${ROOT}/.forge/e2e/s2; mkdir -p scripts/.scratch; python3 - <<'EOF'`,
+  `s=open('scripts/drive-class.mjs').read()`,
+  `a="""await shot('17-eng-phase3')`,
+  `"""`,
+  `b="""ok('Esc', (await cls.count()) === 0 && (await p.locator('[data-testid="preview"] .f-stage').count()) === 1)`,
+  `"""`,
+  `open('scripts/.scratch/drive-class.mjs','w').write(s.replace(a,b))`,
+  `EOF`,
+  `timeout 300 node scripts/.scratch/drive-class.mjs http://127.0.0.1:5302 $E/drive-class > $E/drive-class.log 2>&1; echo exit=$?; cp scripts/.scratch/drive-class.mjs $E/drive-class.patched.mjs; rm -r scripts/.scratch; grep -E "FAIL|PASS|errs" $E/drive-class.log | tail -8`,
+].join('\n')
+const TEMP_CHECKOUT = `W=${ROOT}/.worktrees/s5-ai; B=/tmp/s5-before; rm -rf $B; mkdir -p $B && git -C $W archive 7352b09 | tar -x -C $B && ln -s $W/node_modules $B/node_modules && for d in runtime worlds; do [ -e $B/public/$d ] || ln -s $W/public/$d $B/public/$d; done; ls $B/public | head; cd $B && (PORT=5316 nohup npx vite --port 5306 --strictPort > /tmp/s5-before.log 2>&1 &) ; sleep 4; curl -s -o /dev/null -w "%{http_code}\\n" http://127.0.0.1:5306/`
+
+describe('safe targets', () => {
+  test('a system temp checkout is replaced without asking, and the reason is shown', async ($, on) => {
+    const logs: string[] = []
+    const state = safeTargets(on, { missing: ['/tmp/s5-before'], logs })
+    const ran = await $.tool.call({ tool: 'Bash', command: TEMP_CHECKOUT })
+    expect(state.asked).toBe(false)
+    expect(ran.deny).toBeUndefined()
+    expect(ran.result?.stdout).toContain('auto-proceed')
+    expect(ran.result?.stdout).toContain('/private/tmp/s5-before')
+    expect(logs[0]).toContain('auto-proceed')
+  })
+
+  test('a .scratch folder is removed after a heredoc without asking', async ($, on) => {
+    const state = safeTargets(on)
+    const ran = await $.tool.call({ tool: 'Bash', command: SCRATCH_RUN })
+    expect(state.asked).toBe(false)
+    expect(ran.result?.stdout).toContain(`${ROOT}/.worktrees/s2-player/scripts/.scratch`)
+  })
+
+  const auto = [
+    ['a JavaScript heredoc with template literals', `cd ${ROOT}/.worktrees/s2; cat > scripts/.scratch/a.mjs <<'EOF'\nawait p.screenshot({ path: \`\${out}/a.png\` })\nEOF\nnode scripts/.scratch/a.mjs; cp scripts/.scratch/*.mjs out/; rm -r scripts/.scratch; git status --short`],
+    ['$TMPDIR under the system temp folder', 'rm -rf "$TMPDIR/build-cache"'],
+    ['a pattern in the last part of a temp path', 'rm -rf /tmp/run-*'],
+    ['strict mode and several scratch folders', `set -euo pipefail; cd ${ROOT}/app && rm -rf .tmp node_modules/.cache/tmp`],
+    ['a tmp folder under home', 'rm -rf ~/.cache/tmp'],
+    ['a redirected delete', 'rm -rf /tmp/build 2>&1 | tail -1'],
+  ]
+  for (const [name, command] of auto) {
+    test(`proceeds without asking: ${name}`, async ($, on) => {
+      const state = safeTargets(on, { env: { TMPDIR: '/var/folders/xy/T/' } })
+      const ran = await $.tool.call({ tool: 'Bash', command: command! })
+      expect(state.asked).toBe(false)
+      expect(ran.result?.stdout).toContain('auto-proceed')
+    })
+  }
+
+  const asks: [string, string, Parameters<typeof safeTargets>[1]?][] = [
+    ['the temp folder itself', 'rm -rf /tmp'],
+    ['everything in the temp folder', 'rm -rf /tmp/*'],
+    ['a path that climbs out of temp', 'rm -rf /tmp/../Users/agent'],
+    ['a project folder', `rm -rf ${ROOT}/src`],
+    ['one of two targets outside', `rm -rf /tmp/build ${ROOT}/src`],
+    ['a relative folder that is not scratch, even after cd /tmp', 'cd /tmp; rm -rf build'],
+    ['a name that only starts with tmp', 'rm -rf ~/tmp-notes'],
+    ['a temp symlink that points into the project', 'rm -rf /tmp/link/src', { links: { '/tmp/link': ROOT } }],
+    ['a pattern before the last part', 'rm -rf /tmp/*/src'],
+    ['$TMPDIR set outside system temp', 'rm -rf "$TMPDIR/project"', { env: { TMPDIR: '/Users/agent' } }],
+    ['an unknown variable', 'rm -rf $UNKNOWN/tmp'],
+    ['a command substitution', 'rm -rf "$(mktemp -d)"'],
+    ['an assignment that may not run', `W=/tmp/x; false && W=${ROOT}; rm -rf $W`],
+    ['rm behind sudo', 'sudo rm -rf /tmp/x'],
+    ['another rm behind xargs', 'find /tmp/x -print0 | xargs -0 rm -rf; rm -rf /tmp/y'],
+    ['an rm inside a substitution', 'echo "$(rm -rf ~)"; rm -rf /tmp/x'],
+    ['an rm inside a subshell', `(cd ${ROOT} && rm -rf src); rm -rf /tmp/x`],
+    ['a changed PATH', 'PATH=/tmp/bin:/usr/bin; rm -rf /tmp/x'],
+    ['a git reset beside it', 'rm -rf /tmp/x; git reset --hard'],
+    ['a git reset on the next line', 'rm -rf /tmp/build\ngit reset --hard'],
+    ['a git clean on the next line', 'rm -rf /tmp/build\ngit clean -fdx'],
+    ['a git reset after a background delete', 'rm -rf /tmp/build & git reset --hard'],
+    ['a cluster delete on the next line', 'rm -rf /tmp/build\nkubectl delete ns prod'],
+    ['a git reset inside a group', 'rm -rf /tmp/build; { git reset --hard; }'],
+    ['a git reset behind nohup', 'rm -rf /tmp/build; nohup git reset --hard'],
+    ['a SQL wipe beside it', 'rm -rf /tmp/x && mysql -e "DROP TABLE users"'],
+  ]
+  for (const [name, command, options] of asks) {
+    test(`still asks: ${name}`, async ($, on) => {
+      const state = safeTargets(on, options)
+      const ran = await $.tool.call({ tool: 'Bash', command })
+      expect(state.asked).toBe(true)
+      expect(state.didRun).toBe(false)
+      expect(ran.deny).toContain('cancelled')
+    })
+  }
 })

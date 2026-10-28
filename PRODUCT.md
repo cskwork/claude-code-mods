@@ -30,7 +30,7 @@ Visitors arrive from GitHub or a shared link, usually on desktop, often with a t
 ## Capabilities and Constraints
 
 - token-weather bands: under 25% ☀ Clear (yellow), 25–49% ☁ Cloudy (cyan), 50–74% ☂ Showers (blue), 75–89% ☇ Storm (magenta), 90%+ ↯ Compact soon (red). Shows percent, tokens used / window, sparkline of last 12 turns (▁▂▃▄▅▆▇█), last-turn delta.
-- blast-radius gates: recursive `rm`, `git reset --hard`, `git clean -f`, force push, `git checkout -- .`/`git restore`, `git branch -D`, `git stash drop/clear`, `kubectl delete`, SQL DROP/TRUNCATE/DELETE without WHERE, DB migrations. Dry runs: `du -sh`, file count, `git status`, `git clean -n`, unpushed commits, `kubectl --dry-run`. Cancel or dismiss denies the call. With no one to ask (headless), it denies.
+- blast-radius gates: recursive `rm`, `git reset --hard`, `git clean -f`, force push, `git checkout -- .`/`git restore`, `git branch -D`, `git stash drop/clear`, `kubectl delete`, SQL DROP/TRUNCATE/DELETE without WHERE, DB migrations. Dry runs: `du -sh`, file count, `git status`, `git clean -n`, unpushed commits, `kubectl --dry-run`. Cancel or dismiss denies the call. Recursive deletes that resolve inside system temp or a `.scratch`/`tmp`/`.tmp` folder run without asking. With no one to ask (headless), it denies unless the unattended allowlist covers the command.
 - Requires Claude Code 2.1.287 or later. Mods API is early access.
 - Template: slash command, status line, band, `$.state` contract, test.
 

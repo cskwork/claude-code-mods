@@ -13,9 +13,10 @@ export function analyze(command: string): Risk[] {
   if (SQL_WIPE.test(command)) risks.push({ reason: 'SQL that drops or wipes data (no dry run possible)', checks: [] })
   if (MIGRATION.test(command)) risks.push({ reason: 'Database migration (no dry run possible)', checks: [] })
 
-  // Follows `cd dir && ...` so each check runs where the command would.
+  // Follows `cd dir && ...` so each check runs where the command would. Each line
+  // and each `&` starts a new command too, so a later line is not read as rm targets.
   let cwd: string | undefined
-  for (const segment of command.split(/&&|\|\||;|\|/)) {
+  for (const segment of command.replace(/\\\n/g, ' ').split(/&&|\|\||;|\||\n|(?<![<>])&(?!>)/)) {
     const words = segment.trim().split(/\s+/).filter(Boolean)
     while (words[0] && (words[0] === 'sudo' || /^\w+=/.test(words[0]))) words.shift()
     const [cmd, ...args] = words
