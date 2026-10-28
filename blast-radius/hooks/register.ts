@@ -4,6 +4,7 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import { analyze } from './analyze'
 import type { Check, Risk } from './analyze'
+import { unattendedReason } from './unattended'
 
 const PROCEED = 'Proceed'
 const CANCEL = 'Cancel'
@@ -17,15 +18,27 @@ export const register: Register = on => {
     const report = (await Promise.all(risks.map(risk => describe($, risk)))).join('\n\n')
     const question = `Blast radius of: ${e.command.slice(0, 120)}\n\n${report}\n\nRun it?`
     $.ui.status('blast-radius: waiting for your call')
+    let reason: string | undefined
     try {
-      const answer = await $.ui.ask(question, { header: 'Blast', options: [PROCEED, CANCEL] })
-      if (answer === PROCEED) return next(e)
-      return { deny: `blast-radius: the user cancelled this command after seeing its dry run.\n${report}` }
-    } catch {
-      return { deny: 'blast-radius: nobody confirmed this risky command (dialog dismissed or no one to ask).' }
+      let answer: string | undefined
+      try {
+        answer = await $.ui.ask(question, { header: 'Blast', options: [PROCEED, CANCEL] })
+      } catch {
+        try {
+          reason = await unattendedReason($, e.command)
+        } catch (error) {
+          return { deny: `blast-radius: nobody confirmed this risky command (dialog dismissed or no one to ask).\nUnattended denied: ${error instanceof Error ? error.message : String(error)}` }
+        }
+      }
+      if (!reason && answer !== PROCEED) return { deny: `blast-radius: the user cancelled this command after seeing its dry run.\n${report}` }
     } finally {
       $.ui.status(undefined)
     }
+    if (reason) $.ui.log(reason)
+    const ran = await next(e)
+    if (reason && ran.deny === undefined && ran.result && typeof ran.result === 'object' && 'stdout' in ran.result && typeof ran.result.stdout === 'string')
+      return { ...ran, result: { ...ran.result, stdout: `${ran.result.stdout}\n${reason}` } }
+    return ran
   })
 }
 

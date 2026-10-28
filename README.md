@@ -9,7 +9,7 @@ Landing page: https://cskwork.github.io/claude-code-mods/
 | Mod | What it does |
 | --- | --- |
 | [`token-weather`](token-weather) | A one-line forecast of the context window above the prompt: ☀ Clear → ↯ Compact soon, tokens used, a sparkline of the last 12 turns, and how much the last turn added. |
-| [`blast-radius`](blast-radius) | Before a risky Bash command runs (recursive `rm`, `git reset --hard`, `git clean -f`, force push, `git branch -D`, `git stash drop/clear`, `kubectl delete`, SQL `DROP`/`TRUNCATE`, migrations), dry-runs what it would touch and asks **Proceed** or **Cancel**. Cancel or dismiss denies the call. |
+| [`blast-radius`](blast-radius) | Before a risky Bash command runs (recursive `rm`, destructive git including `worktree remove` and file checkout/restore, `kubectl delete`, SQL wipes, migrations), dry-runs what it would touch and asks **Proceed** or **Cancel**. Cancel denies; an unavailable dialog requires the explicit [unattended allowlist](#blast-radius-unattended-sessions). |
 | [`usage-reporter`](usage-reporter) | Shows the weekly (`seven_day`) limit percentage and reset time in `/usage-reporter`. With your receiver URL, account ID and token configured, sends fresh readings on hourly ticks while Claude Code runs. Off by default. |
 | [`template`](template) | Starter mod, not installed: a slash command, a status line entry, a band, and a `$.state` contract with a test. |
 
@@ -24,6 +24,33 @@ Inside Claude Code:
 /plugin install usage-reporter@claude-code-mods
 /reload-plugins
 ```
+
+### blast-radius unattended sessions
+
+Since **0.2.0**, if the confirmation dialog throws because nobody can answer,
+blast-radius proceeds only when **every risk's targets and execution directories
+(cwd / git `-C`, including the git working-tree root)** fall under an explicitly
+allowed prefix. Successful dialogs keep the same Proceed/Cancel behavior; Cancel
+always denies. Auto-proceed adds its reason
+to the Bash result so it appears in the transcript.
+
+The allowlist is `${BLAST_RADIUS_ALLOW_FILE:-~/.config/blast-radius/unattended-allow}`.
+Set the environment variable before starting Claude Code to use a different file.
+Use one absolute directory prefix per line; blank lines and `#` comments are ignored:
+
+```text
+# Only directories owned by these workers
+/absolute/path/to/agent-repository
+/absolute/path/to/agent-worktrees
+```
+
+Earlier assignments in the same command (`W=/absolute/worktree; git -C "$W" ...`),
+`~`, quotes, relative targets, and sequential `cd ... && ...` are resolved without
+executing shell text. Prefix matching respects directory boundaries and resolves
+symlinks with `realpath`. Missing/unreadable/invalid allowlists, paths that `realpath`
+cannot resolve (including missing targets on some systems), unresolved variables,
+unsupported shell constructs, SQL wipes, migrations, cluster deletion and force
+pushes still deny with an explicit reason. No allowlist is installed by default.
 
 ### usage-reporter 빠른 설치 (한국어)
 

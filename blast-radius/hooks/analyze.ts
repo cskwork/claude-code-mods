@@ -73,6 +73,8 @@ function git(args: string[]): Risk | undefined {
       reason: 'Force push rewrites the remote branch',
       checks: [{ label: 'remote commits lost', argv: ['git', 'log', '--oneline', 'HEAD..@{u}'] }],
     })
+  if (sub === 'worktree' && opts[0] === 'remove')
+    return at({ reason: 'git worktree remove deletes a working tree', checks: [{ label: 'worktrees', argv: ['git', 'worktree', 'list', '--porcelain'] }] })
   if ((sub === 'checkout' && has('--', '.')) || (sub === 'restore' && !has('--staged')))
     return at({ reason: `git ${sub} overwrites working-tree changes`, checks: [{ label: 'diff', argv: ['git', 'diff', '--stat'] }] })
   if (sub === 'branch' && (has('-D') || (has('-d', '--delete') && has('--force', '-f')))) {
